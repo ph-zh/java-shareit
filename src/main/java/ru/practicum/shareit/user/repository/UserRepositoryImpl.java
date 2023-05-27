@@ -44,6 +44,11 @@ public class UserRepositoryImpl implements UserRepository {
         users.remove(id);
     }
 
+    @Override
+    public boolean checkExistByUserId(long id) {
+        return users.get(id) != null;
+    }
+
     private long getId() {
         return ++lastId;
     }

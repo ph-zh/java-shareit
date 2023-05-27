@@ -25,14 +25,14 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto save(long userId, ItemDto itemDto) {
-        userService.getById(userId);
+        userService.checkExistUser(userId);
         Item item = itemRepository.save(userId, itemMapper.toItem(itemDto));
         return itemMapper.toItemDto(item);
     }
 
     @Override
     public List<ItemDto> getAllUserItems(long userId) {
-        userService.getById(userId);
+        userService.checkExistUser(userId);
         return itemMapper.toListOfItemDto(itemRepository.findAllUserItems(userId));
     }
 
@@ -60,7 +60,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto getById(long itemId, long userId) {
-        userService.getById(userId);
+        userService.checkExistUser(userId);
 
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException(String.format("item with id: %d not found", itemId)));
@@ -70,7 +70,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> search(long userId, String text) {
-        userService.getById(userId);
+        userService.checkExistUser(userId);
 
         return itemMapper.toListOfItemDto(itemRepository.search(text));
     }

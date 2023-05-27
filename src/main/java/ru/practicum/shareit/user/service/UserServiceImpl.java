@@ -75,4 +75,10 @@ public class UserServiceImpl implements UserService {
                     throw new BadRequestException(String.format("user with email: %s already exist", email));
                 });
     }
+
+    public void checkExistUser(long id) {
+        if (!userRepository.checkExistByUserId(id)) {
+            throw new NotFoundException(String.format("user with id: %d does not exist yet", id));
+        }
+    }
 }

@@ -15,4 +15,6 @@ public interface UserRepository {
     User update(long id, User user);
 
     void delete(long id);
+
+    boolean checkExistByUserId(long id);
 }
