@@ -1,4 +1,4 @@
-package ru.practicum.shareit.item.controller.exception;
+package ru.practicum.shareit.exception;
 
 public class BadRequestException extends RuntimeException {
 

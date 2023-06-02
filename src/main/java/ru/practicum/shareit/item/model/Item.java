@@ -1,22 +1,42 @@
 package ru.practicum.shareit.item.model;
 
-import jdk.jfr.BooleanFlag;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
+import org.hibernate.Hibernate;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.persistence.*;
+import java.util.Objects;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "items")
 public class Item {
-    private long id;
-    @NotBlank
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private String name;
-    @NotBlank
     private String description;
-    @BooleanFlag
-    @NotNull
+    @Column(name = "is_available")
     private Boolean available;
-    private long owner;
+    @Column(name = "owner_id")
+    private Long owner;
+    @Column(name = "request_id")
+    private Long request;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        Item item = (Item) o;
+        return id != null && Objects.equals(id, item.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

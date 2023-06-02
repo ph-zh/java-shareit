@@ -2,9 +2,9 @@ package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-import ru.practicum.shareit.item.controller.exception.BadRequestException;
-import ru.practicum.shareit.item.controller.exception.NotFoundException;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
@@ -16,6 +16,7 @@ import java.util.List;
 @Validated
 @RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -35,8 +36,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDto save(UserDto userDto) {
-        throwIfEmailDuplicate(userDto);
 
         User user = userRepository.save(userMapper.toUser(userDto));
 
@@ -44,41 +45,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public @Validated(Marker.OnCreate.class) UserDto update(long id, UserDto userDto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("user with id: %d does not exist yet", id)));
 
-        if (userDto.getEmail() != null && !userDto.getEmail().isBlank() && !user.getEmail().equals(userDto.getEmail())) {
-            throwIfEmailDuplicate(userDto);
+        if (userDto.getEmail() != null && !userDto.getEmail().isBlank()) {
             user.setEmail(userDto.getEmail());
         }
         if (userDto.getName() != null && !userDto.getName().isBlank()) {
             user.setName(userDto.getName());
         }
-
         return userMapper.toUserDto(user);
     }
 
     @Override
+    @Transactional
     public void delete(long id) {
-        getById(id);
-        userRepository.delete(id);
-    }
-
-    private void throwIfEmailDuplicate(UserDto userDto) {
-        userRepository.findAll()
-                .stream()
-                .map(User::getEmail)
-                .filter(email -> email.equals(userDto.getEmail()))
-                .findFirst()
-                .ifPresent(email -> {
-                    throw new BadRequestException(String.format("user with email: %s already exist", email));
-                });
-    }
-
-    public void checkExistUser(long id) {
-        if (!userRepository.checkExistByUserId(id)) {
-            throw new NotFoundException(String.format("user with id: %d does not exist yet", id));
-        }
+        userRepository.deleteById(id);
     }
 }
