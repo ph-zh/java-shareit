@@ -18,5 +18,5 @@ public class CommentDto {
     @NotBlank
     private String authorName;
     @Past
-    private Instant created;
+    private Instant instant;
 }

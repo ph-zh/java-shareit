@@ -1,11 +1,13 @@
 package ru.practicum.shareit.user.model;
 
 import lombok.*;
+import lombok.experimental.Accessors;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
 import java.util.Objects;
 
+@Accessors(chain = true)
 @Getter
 @Setter
 @ToString

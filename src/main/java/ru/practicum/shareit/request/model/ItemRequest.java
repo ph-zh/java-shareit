@@ -22,7 +22,7 @@ public class ItemRequest {
     private String description;
     @Column(name = "requestor_id")
     private Long requestor;
-    private Instant created = Instant.now();
+    private Instant created;
 
     @Override
     public boolean equals(Object o) {

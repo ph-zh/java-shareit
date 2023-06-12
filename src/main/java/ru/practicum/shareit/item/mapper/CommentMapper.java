@@ -18,7 +18,8 @@ public class CommentMapper {
         return CommentDto.builder()
                 .id(comment.getId())
                 .text(comment.getText())
-                .created(comment.getCreated())
+                .instant(comment.getCreated())
+                .authorName(comment.getAuthor().getName())
                 .build();
     }
 }

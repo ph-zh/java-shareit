@@ -2,14 +2,14 @@ package ru.practicum.shareit.item.service;
 
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import ru.practicum.shareit.booking.dto.BookingDtoForItem;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.BadRequestException;
 import ru.practicum.shareit.exception.NotFoundException;
@@ -62,12 +62,14 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDtoWithBookingsAndComments> getAllUserItems(long userId) {
+    public List<ItemDtoWithBookingsAndComments> getAllUserItems(long userId, Integer from, Integer size) {
         userService.getById(userId);
-        List<Item> items = itemRepository.findByOwner(userId);
-        if (items.isEmpty()) {
-            return Collections.emptyList();
-        }
+
+        List<Item> items;
+
+        Pageable pageable = PageRequest.of(from / size, size);
+        items = itemRepository.findAllByOwner(userId, pageable).getContent();
+
 
         return addBookingsAndCommentsForItems(items);
     }
@@ -115,10 +117,14 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> search(long userId, String text) {
+    public List<ItemDto> search(long userId, String text, Integer from, Integer size) {
         userService.getById(userId);
+        List<Item> items;
 
-        return itemMapper.toListOfItemDto(itemRepository.search(text.toLowerCase()));
+        Pageable pageable = PageRequest.of(from / size, size);
+        items = itemRepository.search(text.toLowerCase(), pageable).getContent();
+
+        return itemMapper.toListOfItemDto(items);
     }
 
     @Override
@@ -126,15 +132,16 @@ public class ItemServiceImpl implements ItemService {
     public CommentDto addComment(long userId, long itemId, CommentCreationDto commentCreationDto) {
         UserDto userDto = userService.getById(userId);
         List<Booking> pastBookings = bookingRepository.findAllByBookerIdAndPastState(userId,
-                Sort.by(Sort.Direction.DESC, "end"));
+                Pageable.unpaged()).getContent();
         if (pastBookings.isEmpty()) {
-            throw new BadRequestException(String.format("Item with id: %d has never been booked", itemId));
+            throw new BadRequestException(String.format("Booker with id: %d has never booked items in the past",
+                    userId));
         }
         if (pastBookings.stream()
-                .map(b -> b.getBooker().getId())
-                .noneMatch(id -> id.equals(userId))) {
-            throw new BadRequestException(String.format("Booker with id: %d did not take the item with id: %d" +
-                    " or the booking term has not yet expired", userId, itemId));
+                .map(b -> b.getItem().getId())
+                .noneMatch(id -> id.equals(itemId))) {
+            throw new BadRequestException(String.format("The booker with id: %d has not yet booked an item with id: %d" +
+                    " or the booked period has not yet expired", userId, itemId));
         }
         Item item = pastBookings.stream()
                 .map(Booking::getItem)
@@ -160,7 +167,6 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.toList());
 
         List<BookingDtoForItem> bookings = bookingRepository.findAllByItemsId(itemsId).stream()
-                .filter(b -> !b.getStatus().equals(Status.REJECTED))
                 .map(bookingMapper::toBookingDtoForItem)
                 .collect(Collectors.toList());
 
@@ -169,7 +175,7 @@ public class ItemServiceImpl implements ItemService {
         Set<ItemDtoWithBookingsAndComments> itemsWithBookings =
                 new TreeSet<>(Comparator.comparing(ItemDtoWithBookingsAndComments::getId));
         for (Item item : items) {
-            ItemDtoWithBookingsAndComments itemDtoWithBookings = itemMapper.toItemDtoWithBooking(item);
+            ItemDtoWithBookingsAndComments itemDtoWithBookings = itemMapper.toItemDtoWithBookingAndComments(item);
             Set<BookingDtoForItem> nextBookings = new TreeSet<>(Comparator.comparing(BookingDtoForItem::getStart));
             Set<BookingDtoForItem> lastBookings = new TreeSet<>(Comparator.comparing(BookingDtoForItem::getEnd)
                     .reversed());
@@ -186,11 +192,6 @@ public class ItemServiceImpl implements ItemService {
             itemDtoWithBookings.setNextBooking(nextBookings.stream().findFirst().orElse(null));
             itemDtoWithBookings.setLastBooking(lastBookings.stream().findFirst().orElse(null));
             itemsWithBookings.add(itemDtoWithBookings);
-
-            if (comments.isEmpty()) {
-                itemDtoWithBookings.setComments(Collections.emptyList());
-                continue;
-            }
 
             itemDtoWithBookings.setComments(new ArrayList<>());
             for (Comment comment : comments) {
