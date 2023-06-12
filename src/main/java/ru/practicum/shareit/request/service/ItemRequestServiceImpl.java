@@ -20,7 +20,9 @@ import ru.practicum.shareit.user.service.UserService;
 
 import javax.validation.Valid;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;

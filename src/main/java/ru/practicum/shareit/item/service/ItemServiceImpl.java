@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import ru.practicum.shareit.booking.dto.BookingDtoForItem;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.BadRequestException;
 import ru.practicum.shareit.exception.NotFoundException;
@@ -167,6 +168,7 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.toList());
 
         List<BookingDtoForItem> bookings = bookingRepository.findAllByItemsId(itemsId).stream()
+                .filter(b -> !b.getStatus().equals(Status.REJECTED))
                 .map(bookingMapper::toBookingDtoForItem)
                 .collect(Collectors.toList());
 
