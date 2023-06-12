@@ -10,7 +10,7 @@ import javax.validation.constraints.NotBlank;
 @Data
 @Builder
 public class UserDto {
-    private long id;
+    private Long id;
     @NotBlank(
             groups = Marker.OnCreate.class,
             message = "name field cannot be empty"
