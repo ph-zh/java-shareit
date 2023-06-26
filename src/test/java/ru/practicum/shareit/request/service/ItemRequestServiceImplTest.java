@@ -83,7 +83,7 @@ class ItemRequestServiceImplTest {
         List<Item> items = List.of();
 
         when(itemRepository.findAllByRequestIn(anyList())).thenReturn(items);
-        when(itemMapper.toListOfItemDto(items)).thenReturn(itemsDto);
+
 
         List<ItemRequestDto> actualList = itemRequestService.getAllByOwner(userId);
 
@@ -106,7 +106,7 @@ class ItemRequestServiceImplTest {
         List<Item> items = List.of();
 
         when(itemRepository.findAllByRequestIn(anyList())).thenReturn(items);
-        when(itemMapper.toListOfItemDto(items)).thenReturn(itemsDto);
+
 
         List<ItemRequestDto> actualList = itemRequestService.getAll(userId, from, size);
 
