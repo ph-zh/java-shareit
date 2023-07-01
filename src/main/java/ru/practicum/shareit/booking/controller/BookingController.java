@@ -11,6 +11,7 @@ import ru.practicum.shareit.exception.BadRequestException;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @Validated
@@ -30,26 +31,30 @@ public class BookingController {
     @PatchMapping("/{bookingId}")
     public BookingDto approve(@PathVariable @Positive long bookingId,
                               @RequestParam boolean approved,
-                              @RequestHeader("X-Sharer-User-Id") Long userId) {
+                              @RequestHeader("X-Sharer-User-Id") long userId) {
         return bookingService.approve(bookingId, approved, userId);
     }
 
     @GetMapping("/{bookingId}")
     public BookingDto getById(@PathVariable @Positive long bookingId,
-                              @RequestHeader("X-Sharer-User-Id") Long userId) {
+                              @RequestHeader("X-Sharer-User-Id") long userId) {
         return bookingService.getById(bookingId, userId);
     }
 
     @GetMapping
     public List<BookingDto> getAllByBooker(@RequestParam(defaultValue = "ALL") String state,
-                                           @RequestHeader("X-Sharer-User-Id") long userId) {
-        return bookingService.getAllByBooker(throwIfStateNotValid(state), userId);
+                                           @RequestHeader("X-Sharer-User-Id") long userId,
+                                           @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                           @RequestParam(defaultValue = "10") @Positive Integer size) {
+        return bookingService.getAllByBooker(throwIfStateNotValid(state), userId, from, size);
     }
 
     @GetMapping("/owner")
     public List<BookingDto> getAllByOwner(@RequestParam(defaultValue = "ALL") String state,
-                                          @RequestHeader("X-Sharer-User-Id") long userId) {
-        return bookingService.getAllByOwner(throwIfStateNotValid(state), userId);
+                                          @RequestHeader("X-Sharer-User-Id") long userId,
+                                          @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                          @RequestParam(defaultValue = "10") @Positive Integer size) {
+        return bookingService.getAllByOwner(throwIfStateNotValid(state), userId, from, size);
     }
 
     private State throwIfStateNotValid(String state) {

@@ -1,6 +1,8 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,7 +85,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException(String.format("booking with id: %d does not found", bookingId)));
 
-        if (booking.getBooker().getId() != (userId) && booking.getItem().getOwner() != userId) {
+        if (booking.getBooker().getId() != userId && booking.getItem().getOwner() != userId) {
             throw new NotFoundException("the booking cannot be viewed by a non-owner of the item" +
                     " or a non-creator of the booking");
         }
@@ -92,81 +94,89 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getAllByBooker(State state, long userId) {
+    public List<BookingDto> getAllByBooker(State state, long userId, Integer from, Integer size) {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(String.format("user with id: %d does not exist yet", userId));
         }
 
+        Sort sort = Sort.by(Sort.Direction.DESC, "end");
+        Pageable pageable = PageRequest.of(from / size, size, sort);
+
+        return getAllByBookerAndStateWithPaginationTerms(state, userId, pageable);
+    }
+
+    @Override
+    public List<BookingDto> getAllByOwner(State state, long userId, Integer from, Integer size) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException(String.format("user with id: %d does not exist yet", userId));
+        }
+
+        Sort sort = Sort.by(Sort.Direction.DESC, "end");
+        Pageable pageable = PageRequest.of(from / size, size, sort);
+
+        return getAllByOwnerAndStateWithPaginationTerms(state, userId, pageable);
+
+    }
+
+    private List<BookingDto> getAllByBookerAndStateWithPaginationTerms(State state, long userId, Pageable pageable) {
         List<BookingDto> result = Collections.emptyList();
 
         switch (state) {
             case ALL:
                 result = bookingMapper.toListOfBookingDto(bookingRepository.findAllByBookerId(userId,
-                        Sort.by(Sort.Direction.DESC, "end")));
+                        pageable).getContent());
                 break;
             case CURRENT:
                 result = bookingMapper.toListOfBookingDto(bookingRepository
-                        .findAllByBookerIdAndCurrentState(userId, Sort.by(Sort.Direction.DESC, "end")));
+                        .findAllByBookerIdAndCurrentState(userId, pageable).getContent());
                 break;
             case PAST:
                 result = bookingMapper.toListOfBookingDto(bookingRepository
-                        .findAllByBookerIdAndPastState(userId, Sort.by(Sort.Direction.DESC, "end")));
+                        .findAllByBookerIdAndPastState(userId, pageable).getContent());
                 break;
             case FUTURE:
                 result = bookingMapper.toListOfBookingDto(bookingRepository
-                        .findAllByBookerIdAndFutureState(userId, Sort.by(Sort.Direction.DESC, "end")));
+                        .findAllByBookerIdAndFutureState(userId, pageable).getContent());
                 break;
             case WAITING:
                 result = bookingMapper.toListOfBookingDto(bookingRepository
-                        .findAllByBookerIdAndWaitingOrRejectedState(userId, Status.WAITING,
-                                Sort.by(Sort.Direction.DESC, "end")));
+                        .findAllByBookerIdAndWaitingOrRejectedState(userId, Status.WAITING, pageable).getContent());
                 break;
             case REJECTED:
                 result = bookingMapper.toListOfBookingDto(bookingRepository
-                        .findAllByBookerIdAndWaitingOrRejectedState(userId, Status.REJECTED,
-                                Sort.by(Sort.Direction.DESC, "end")));
+                        .findAllByBookerIdAndWaitingOrRejectedState(userId, Status.REJECTED, pageable).getContent());
                 break;
         }
+
         return result;
     }
 
-    @Override
-    public List<BookingDto> getAllByOwner(State state, long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException(String.format("user with id: %d does not exist yet", userId));
-        }
-
+    private List<BookingDto> getAllByOwnerAndStateWithPaginationTerms(State state, long userId, Pageable pageable) {
         List<BookingDto> result = Collections.emptyList();
 
         switch (state) {
             case ALL:
-                result = bookingMapper.toListOfBookingDto(bookingRepository.findAllByOwnerId(userId,
-                        Sort.by(Sort.Direction.DESC, "end")));
+                result = bookingMapper.toListOfBookingDto(bookingRepository.findAllByOwnerId(userId, pageable).getContent());
                 break;
             case CURRENT:
                 result = bookingMapper.toListOfBookingDto(bookingRepository
-                        .findAllByOwnerIdAndCurrentState(userId,
-                                Sort.by(Sort.Direction.DESC, "end")));
+                        .findAllByOwnerIdAndCurrentState(userId, pageable).getContent());
                 break;
             case PAST:
                 result = bookingMapper.toListOfBookingDto(bookingRepository
-                        .findAllByOwnerIdAndPastState(userId,
-                                Sort.by(Sort.Direction.DESC, "end")));
+                        .findAllByOwnerIdAndPastState(userId, pageable).getContent());
                 break;
             case FUTURE:
                 result = bookingMapper.toListOfBookingDto(bookingRepository
-                        .findAllByOwnerIdAndFutureState(userId,
-                                Sort.by(Sort.Direction.DESC, "end")));
+                        .findAllByOwnerIdAndFutureState(userId, pageable).getContent());
                 break;
             case WAITING:
                 result = bookingMapper.toListOfBookingDto(bookingRepository
-                        .findAllByOwnerIdAndWaitingOrRejectedState(userId, Status.WAITING,
-                                Sort.by(Sort.Direction.DESC, "end")));
+                        .findAllByOwnerIdAndWaitingOrRejectedState(userId, Status.WAITING, pageable).getContent());
                 break;
             case REJECTED:
                 result = bookingMapper.toListOfBookingDto(bookingRepository
-                        .findAllByOwnerIdAndWaitingOrRejectedState(userId, Status.REJECTED,
-                                Sort.by(Sort.Direction.DESC, "end")));
+                        .findAllByOwnerIdAndWaitingOrRejectedState(userId, Status.REJECTED, pageable).getContent());
                 break;
         }
         return result;
