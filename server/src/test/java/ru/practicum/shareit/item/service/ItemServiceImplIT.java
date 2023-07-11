@@ -193,13 +193,13 @@ class ItemServiceImplIT {
         CommentDto savedCommentDto = commentMapper.toCommentDto(commentRepository.findById(actualCommentDto.getId())
                 .orElseThrow(() -> new NotFoundException("comment does not saved in db")));
 
-        Instant actual = LocalDateTime.parse(LocalDateTime.ofInstant(actualCommentDto.getInstant(),
+        Instant actual = LocalDateTime.parse(LocalDateTime.ofInstant(actualCommentDto.getCreated(),
                 ZoneOffset.UTC).format(formatter), formatter).toInstant(ZoneOffset.UTC);
-        actualCommentDto.setInstant(actual);
+        actualCommentDto.setCreated(actual);
 
-        Instant saved = LocalDateTime.parse(LocalDateTime.ofInstant(savedCommentDto.getInstant(),
+        Instant saved = LocalDateTime.parse(LocalDateTime.ofInstant(savedCommentDto.getCreated(),
                 ZoneOffset.UTC).format(formatter), formatter).toInstant(ZoneOffset.UTC);
-        savedCommentDto.setInstant(saved);
+        savedCommentDto.setCreated(saved);
 
         assertEquals(actualCommentDto, savedCommentDto);
     }
